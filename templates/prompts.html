@@ -1,0 +1,112 @@
+{% extends 'layout.html' %}
+
+{% set title = 'Prompt Library' %}
+{% set topbar_title = 'Prompt Library' %}
+{% set topbar_meta = 'Versioned markdown prompts with model and temperature metadata' %}
+
+{% block content %}
+<main class="page">
+  <section class="hero">
+    <div>
+      <div class="section-label">Prompt Registry</div>
+      <h1 class="hero__title">Track full prompt text and metadata beside every audit run.</h1>
+      <div class="hero__copy">Prompt versions are sourced from markdown files. The upload flow binds each CSV batch to one of these records so you can compare quality over time without losing the exact reference text.</div>
+    </div>
+  </section>
+
+  <div class="stack" style="margin-top: 24px;">
+    <section class="section">
+      <div class="section__header">
+        <div>
+          <div class="section-label">Available Prompt Library</div>
+          <h2 class="section-title">Switch prompt reference</h2>
+          <div class="section-copy">Use the selector below to inspect stored prompt metadata and full markdown content.</div>
+        </div>
+        <div class="badge">{{ prompts|length }} prompts</div>
+      </div>
+
+      {% if selected_prompt %}
+        <details class="prompt-selector">
+          <summary class="prompt-selector__trigger">
+            <div class="prompt-selector__summary">
+              <div class="split-row">
+                <span class="badge badge--accent">{{ selected_prompt.id }}</span>
+                <span class="caption">{{ runs|selectattr('prompt_id', 'equalto', selected_prompt.id)|list|length }} runs</span>
+              </div>
+              <strong>{{ selected_prompt.name }}</strong>
+              <div class="caption">{{ selected_prompt.model }} | temp {{ selected_prompt.temperature }} | {{ selected_prompt.file_name }}</div>
+              <div class="caption">{{ selected_prompt.notes or 'No notes provided.' }}</div>
+            </div>
+            <span>toggle</span>
+          </summary>
+
+          <div class="prompt-selector__dropdown">
+            {% for prompt in prompts %}
+              <a href="{{ url_for('pages.prompts', prompt_id=prompt.id) }}" class="prompt-selector__option{% if selected_prompt and prompt.id == selected_prompt.id %} prompt-selector__option--active{% endif %}">
+                <div class="split-row">
+                  <span class="badge badge--accent">{{ prompt.id }}</span>
+                  <span class="caption">{{ runs|selectattr('prompt_id', 'equalto', prompt.id)|list|length }} runs</span>
+                </div>
+                <strong>{{ prompt.name }}</strong>
+                <div class="caption">{{ prompt.model }} | temp {{ prompt.temperature }} | {{ prompt.file_name }}</div>
+                <div class="caption">{{ prompt.notes or 'No notes provided.' }}</div>
+              </a>
+            {% endfor %}
+          </div>
+        </details>
+      {% endif %}
+    </section>
+
+    {% if selected_prompt %}
+      <section class="section prompt-preview prompt-preview--full prompt-preview--flush">
+        <div class="section__header">
+          <div>
+            <div class="section-label">Prompt Reference</div>
+            <h2 class="section-title">{{ selected_prompt.name }}</h2>
+            <div class="section-copy">This is the exact prompt text available for CSV-to-prompt binding during import.</div>
+          </div>
+          <div class="tag-list">
+            <span class="badge">{{ selected_prompt.model }}</span>
+            <span class="badge">temp {{ selected_prompt.temperature }}</span>
+          </div>
+        </div>
+
+        <div class="prompt-summary" style="margin-top: 18px;">
+          <div class="mini-stat"><div class="mini-stat__label">Prompt Id</div><div class="mini-stat__value">{{ selected_prompt.id }}</div></div>
+          <div class="mini-stat"><div class="mini-stat__label">File</div><div class="mini-stat__value">{{ selected_prompt.file_name }}</div></div>
+          <div class="mini-stat"><div class="mini-stat__label">Created</div><div class="mini-stat__value">{{ selected_prompt.createdAt or 'Unknown' }}</div></div>
+        </div>
+
+        <div class="detail-card" style="margin-top: 22px;">
+          <div class="detail-card__label">Notes</div>
+          <div class="detail-card__text">{{ selected_prompt.notes or 'No notes recorded.' }}</div>
+        </div>
+
+        <div class="detail-card" style="margin-top: 18px;">
+          <div class="detail-card__label">Markdown Content</div>
+          <div class="prompt-preview__content">{{ selected_prompt.content }}</div>
+        </div>
+      </section>
+    {% endif %}
+
+    <section class="section">
+      <div class="section__header">
+        <div>
+          <div class="section-label">Add Prompt</div>
+          <h2 class="section-title">Create a new prompt version</h2>
+          <div class="section-copy">This writes a markdown file into `prompts/` with frontmatter and full prompt content.</div>
+        </div>
+      </div>
+
+      <form action="{{ url_for('pages.prompts_create') }}" method="post" class="import-form">
+        <label class="form-field"><span class="field-label">Name</span><input class="input" name="name" required placeholder="Prompt v4 strict landmark handling"></label>
+        <label class="form-field"><span class="field-label">Model</span><input class="input" name="model" required placeholder="gpt-4.1"></label>
+        <label class="form-field"><span class="field-label">Temperature</span><input class="input" type="number" step="0.1" min="0" max="2" name="temperature" value="0.2" required></label>
+        <label class="form-field"><span class="field-label">Notes</span><input class="input" name="notes" placeholder="What changed in this version"></label>
+        <label class="form-field form-field--full"><span class="field-label">Prompt Markdown Content</span><textarea class="textarea textarea--large" name="content" required placeholder="Full prompt text..."></textarea></label>
+        <div class="form-field form-field--full"><button type="submit" class="button">Add Prompt Version</button></div>
+      </form>
+    </section>
+  </div>
+</main>
+{% endblock %}

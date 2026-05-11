@@ -1,0 +1,44 @@
+{% if dashboard.runs %}
+  <div class="table-wrap">
+    <div class="table-scroll">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Imported</th>
+            <th>Source File</th>
+            <th>Prompt</th>
+            <th>Volume</th>
+            <th>Reviewed</th>
+            <th>Avg Score</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for run in dashboard.runs %}
+            <tr>
+              <td>{{ run.imported_at|format_datetime }}</td>
+              <td><div class="stack stack--compact"><strong>{{ run.source_filename }}</strong><span class="caption">{{ run.rules_count }} unique rules</span></div></td>
+              <td><div class="stack stack--compact"><span class="rule-chip">{{ run.prompt_name }}</span><span class="caption">{{ run.prompt_id }}</span></div></td>
+              <td>{{ run.row_count }}</td>
+              <td>{{ run.reviewed_count }}</td>
+              <td>
+                {% if run.average_score is none %}
+                  <span class="badge">Pending</span>
+                {% else %}
+                  <span class="badge{% if run.average_score >= 4 %} badge--accent{% elif run.average_score <= 2 %} badge--danger{% endif %}">{{ run.average_score|score_label }} / 5</span>
+                {% endif %}
+              </td>
+              <td><a href="{{ url_for('pages.run_detail', run_id=run.id) }}" class="link-row">Open Review</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% else %}
+  <div class="empty-state">
+    <div class="section-label">No Runs Yet</div>
+    <h2 class="section-title">Import the first CSV batch to start reviewing suggestions.</h2>
+    <div class="empty-state__hint">Once imported, each run keeps a durable copy of the source CSV, its prompt binding, and your review state.</div>
+  </div>
+{% endif %}

@@ -1,0 +1,58 @@
+{% extends 'layout.html' %}
+
+{% set title = region.run.source_filename %}
+{% set topbar_title = 'Review Workspace' %}
+{% set topbar_meta = 'Continue reviewing imported batches over time' %}
+
+{% block content %}
+<main class="page">
+  <section class="section">
+    <form
+      class="filters"
+      method="get"
+      action="{{ url_for('pages.run_detail', run_id=region.run.id) }}"
+      hx-get="{{ url_for('pages.run_review_region', run_id=region.run.id) }}"
+      hx-target="#run-review-region"
+      hx-trigger="change, keyup delay:250ms from:input[name=q]"
+    >
+      <label class="form-field">
+        <span class="field-label">Search</span>
+        <div class="search-inline"><span>search</span><input class="search-inline__input" name="q" value="{{ region.filters.q }}" placeholder="Search descriptions, tags, comments, rule ids"></div>
+      </label>
+      <label class="form-field">
+        <span class="field-label">Rule</span>
+        <select class="select" name="rule">
+          <option value="all">All rules</option>
+          {% for rule_id in region.rule_options %}<option value="{{ rule_id }}" {% if region.filters.rule == rule_id %}selected{% endif %}>{{ rule_id }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="form-field">
+        <span class="field-label">Review Status</span>
+        <select class="select" name="status">
+          <option value="all">All statuses</option>
+          {% for status in review_statuses %}<option value="{{ status }}" {% if region.filters.status == status %}selected{% endif %}>{{ status|title_label }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="form-field">
+        <span class="field-label">Action</span>
+        <select class="select" name="action">
+          <option value="all">All actions</option>
+          {% for action in review_actions %}<option value="{{ action }}" {% if region.filters.action == action %}selected{% endif %}>{{ action|title_label }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="form-field">
+        <span class="field-label">Score</span>
+        <select class="select" name="score">
+          <option value="all">All scores</option>
+          <option value="unscored" {% if region.filters.score == 'unscored' %}selected{% endif %}>Unscored</option>
+          {% for score in [1,2,3,4,5] %}<option value="{{ score }}" {% if region.filters.score == score|string %}selected{% endif %}>{{ score }}</option>{% endfor %}
+        </select>
+      </label>
+    </form>
+  </section>
+
+  <div id="run-review-region">
+    {% include 'partials/run_review_region.html' %}
+  </div>
+</main>
+{% endblock %}

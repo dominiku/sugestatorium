@@ -1,0 +1,74 @@
+<section class="section">
+  <div class="section__header">
+    <div>
+      <div class="section-label">Cross-Batch Review Table</div>
+      <h2 class="section-title">All reviewed items from all batches</h2>
+      <div class="section-copy">Open any row to inspect full metadata and continue editing without re-importing the batch.</div>
+    </div>
+    <div class="badge">{{ region.match_count }} matches</div>
+  </div>
+
+  <form
+    class="filters filters--six"
+    method="get"
+    action="{{ page_path }}"
+    hx-get="{{ url_for('pages.global_review_region') }}"
+    hx-target="#global-review-region"
+    hx-trigger="change, keyup delay:250ms from:input[name=q]"
+  >
+    <input type="hidden" name="reviewed_only" value="{{ 1 if reviewed_only else 0 }}">
+    <input type="hidden" name="page_path" value="{{ page_path }}">
+    <label class="form-field"><span class="field-label">Search</span><div class="search-inline"><span>search</span><input class="search-inline__input" name="q" value="{{ region.filters.q }}" placeholder="Search runs, prompt names, comments, rule ids"></div></label>
+    <label class="form-field"><span class="field-label">Prompt</span><select class="select" name="prompt"><option value="all">All prompts</option>{% for prompt_id in region.prompt_options %}<option value="{{ prompt_id }}" {% if region.filters.prompt == prompt_id %}selected{% endif %}>{{ prompt_id }}</option>{% endfor %}</select></label>
+    <label class="form-field"><span class="field-label">Rule</span><select class="select" name="rule"><option value="all">All rules</option>{% for rule_id in region.rule_options %}<option value="{{ rule_id }}" {% if region.filters.rule == rule_id %}selected{% endif %}>{{ rule_id }}</option>{% endfor %}</select></label>
+    <label class="form-field"><span class="field-label">Review Status</span><select class="select" name="status"><option value="all">All statuses</option>{% for status in review_statuses %}<option value="{{ status }}" {% if region.filters.status == status %}selected{% endif %}>{{ status|title_label }}</option>{% endfor %}</select></label>
+    <label class="form-field"><span class="field-label">Action</span><select class="select" name="action"><option value="all">All actions</option>{% for action in review_actions %}<option value="{{ action }}" {% if region.filters.action == action %}selected{% endif %}>{{ action|title_label }}</option>{% endfor %}</select></label>
+    <label class="form-field"><span class="field-label">Score</span><select class="select" name="score"><option value="all">All scores</option><option value="unscored" {% if region.filters.score == 'unscored' %}selected{% endif %}>Unscored</option>{% for score in [1,2,3,4,5] %}<option value="{{ score }}" {% if region.filters.score == score|string %}selected{% endif %}>{{ score }}</option>{% endfor %}</select></label>
+  </form>
+
+  <div class="table-wrap table-wrap--flush">
+    <div class="table-scroll">
+      <table class="table table--fitted">
+        <thead>
+          <tr>
+            <th>Batch</th>
+            <th>Rule</th>
+            <th>Issue Context</th>
+            <th>Suggested Fix</th>
+            <th>Review</th>
+            <th>Score</th>
+            <th>Tags</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in region['items'] %}
+            <tr>
+              <td>
+                <button class="stack stack--compact cell-batch" type="button" hx-get="{{ url_for('pages.suggestion_drawer', suggestion_id=item.id) }}" hx-target="#drawer-region">
+                  <strong>{{ item.source_filename }}</strong>
+                  <span class="caption">{{ item.prompt_name }}</span>
+                </button>
+              </td>
+              <td><span class="rule-chip">{{ item.rule_id }}</span></td>
+              <td><div class="excerpt excerpt--small">{{ item.current_implementation_description }}</div></td>
+              <td><div class="excerpt excerpt--small">{{ item.recommended_fix_description }}</div></td>
+              <td>
+                <form hx-post="{{ url_for('pages.review_update', suggestion_id=item.id) }}" hx-swap="none"><input type="hidden" name="field" value="review_status"><select class="table-select" name="value" onchange="this.form.requestSubmit()">{% for status in review_statuses %}<option value="{{ status }}" {% if item.review_status == status %}selected{% endif %}>{{ status|title_label }}</option>{% endfor %}</select></form>
+              </td>
+              <td>
+                <form hx-post="{{ url_for('pages.review_update', suggestion_id=item.id) }}" hx-swap="none"><input type="hidden" name="field" value="score"><select class="table-select" name="value" onchange="this.form.requestSubmit()"><option value="">Unscored</option>{% for score in [1,2,3,4,5] %}<option value="{{ score }}" {% if item.score == score %}selected{% endif %}>{{ score }}</option>{% endfor %}</select></form>
+              </td>
+              <td>
+                <form hx-post="{{ url_for('pages.review_update', suggestion_id=item.id) }}" hx-swap="none"><input type="hidden" name="field" value="tags"><input class="table-input" name="value" value="{{ item.tags|join(', ') }}" onchange="this.form.requestSubmit()"></form>
+              </td>
+              <td>
+                <form hx-post="{{ url_for('pages.review_update', suggestion_id=item.id) }}" hx-swap="none"><input type="hidden" name="field" value="action"><select class="table-select" name="value" onchange="this.form.requestSubmit()">{% for action in review_actions %}<option value="{{ action }}" {% if item.action == action %}selected{% endif %}>{{ action|title_label }}</option>{% endfor %}</select></form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,23 @@
+{% extends 'layout.html' %}
+
+{% set title = 'Filtered Reviews' %}
+{% set topbar_title = 'Quality Signals' %}
+{% set topbar_meta = 'Cross-batch review slices and prompt quality history' %}
+
+{% block content %}
+<main class="page">
+  <section class="hero">
+    <div>
+      <div class="section-label">Filtered Review Set</div>
+      <h1 class="hero__title">{{ heading }}</h1>
+      <div class="hero__copy">This page spans all imported batches and stays fully editable, so you can revisit historic judgments without going back through the home screen first.</div>
+    </div>
+  </section>
+
+  {% set reviewed_only = false %}
+  {% set region = review_region %}
+  <div style="margin-top: 24px;" id="global-review-region">
+    {% include 'partials/global_review_region.html' %}
+  </div>
+</main>
+{% endblock %}

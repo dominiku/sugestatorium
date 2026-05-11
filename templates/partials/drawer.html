@@ -1,0 +1,49 @@
+<div class="drawer__header">
+  <div>
+    <div class="section-label">Selected Suggestion</div>
+    <h2 class="section-title">{{ suggestion.rule_id }}</h2>
+    <div class="caption">{{ suggestion.source_filename }}</div>
+    <div class="drawer__meta tag-list">
+      <a href="{{ url_for('pages.run_detail', run_id=suggestion.run_id) }}" class="badge">Open batch</a>
+      <span class="status-pill status-pill--{{ suggestion.review_status }}">{{ suggestion.review_status|title_label }}</span>
+      <span class="status-pill status-pill--{{ suggestion.action }}">{{ suggestion.action|title_label }}</span>
+      <span class="badge">{{ suggestion.prompt_name }}</span>
+    </div>
+  </div>
+  <button type="button" class="button--ghost" onclick="closeDrawer()">Close</button>
+</div>
+
+<div class="drawer__content">
+  <div class="detail-card">
+    <div class="detail-card__label">Editable Review State</div>
+    <div class="import-form" style="margin-top: 14px;">
+      <form hx-post="{{ url_for('pages.review_update', suggestion_id=suggestion.id) }}" hx-swap="none" class="form-field"><input type="hidden" name="field" value="review_status"><label class="field-label">Review Status</label><select class="select" name="value" onchange="this.form.requestSubmit()">{% for status in review_statuses %}<option value="{{ status }}" {% if suggestion.review_status == status %}selected{% endif %}>{{ status|title_label }}</option>{% endfor %}</select></form>
+      <form hx-post="{{ url_for('pages.review_update', suggestion_id=suggestion.id) }}" hx-swap="none" class="form-field"><input type="hidden" name="field" value="score"><label class="field-label">Score</label><select class="select" name="value" onchange="this.form.requestSubmit()"><option value="">Unscored</option>{% for score in [1,2,3,4,5] %}<option value="{{ score }}" {% if suggestion.score == score %}selected{% endif %}>{{ score }}</option>{% endfor %}</select></form>
+      <form hx-post="{{ url_for('pages.review_update', suggestion_id=suggestion.id) }}" hx-swap="none" class="form-field"><input type="hidden" name="field" value="action"><label class="field-label">Action</label><select class="select" name="value" onchange="this.form.requestSubmit()">{% for action in review_actions %}<option value="{{ action }}" {% if suggestion.action == action %}selected{% endif %}>{{ action|title_label }}</option>{% endfor %}</select></form>
+      <form hx-post="{{ url_for('pages.review_update', suggestion_id=suggestion.id) }}" hx-swap="none" class="form-field"><input type="hidden" name="field" value="resolved"><label class="field-label">Resolved</label><input class="checkbox" type="checkbox" name="value" value="1" {% if suggestion.resolved %}checked{% endif %} onchange="this.form.requestSubmit()"></form>
+    </div>
+  </div>
+
+  <div class="detail-card">
+    <div class="detail-card__label">Tags</div>
+    <form hx-post="{{ url_for('pages.review_update', suggestion_id=suggestion.id) }}" hx-swap="none">
+      <input type="hidden" name="field" value="tags">
+      <input class="input" name="value" value="{{ suggestion.tags|join(', ') }}" onchange="this.form.requestSubmit()" placeholder="hallucination, tone, prompt-fix">
+    </form>
+  </div>
+
+  <div class="detail-card">
+    <div class="detail-card__label">Reviewer Comment</div>
+    <form hx-post="{{ url_for('pages.review_update', suggestion_id=suggestion.id) }}" hx-swap="none">
+      <input type="hidden" name="field" value="comment">
+      <textarea class="textarea" name="value" onchange="this.form.requestSubmit()" placeholder="Capture why this suggestion should influence the prompt or implementation.">{{ suggestion.comment }}</textarea>
+    </form>
+  </div>
+
+  <div class="detail-card"><div class="detail-card__label">Why This Fails</div><div class="detail-card__text">{{ suggestion.why_this_fails }}</div></div>
+  <div class="detail-card"><div class="detail-card__label">Impact On Users</div><div class="detail-card__text">{{ suggestion.impact_on_users }}</div></div>
+  <div class="detail-card"><div class="detail-card__label">Current Implementation Description</div><div class="detail-card__text">{{ suggestion.current_implementation_description }}</div></div>
+  <div class="detail-card"><div class="detail-card__label">Recommended Fix Description</div><div class="detail-card__text">{{ suggestion.recommended_fix_description }}</div></div>
+  <div class="detail-card"><div class="detail-card__label">Current Implementation Code</div><pre class="code-block">{{ suggestion.current_implementation_code }}</pre></div>
+  <div class="detail-card"><div class="detail-card__label">Recommended Fix Code</div><pre class="code-block">{{ suggestion.recommended_fix_code }}</pre></div>
+</div>

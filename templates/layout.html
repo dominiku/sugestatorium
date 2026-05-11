@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ title or 'Sugestatorium' }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='globals.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  </head>
+  <body>
+    <div class="shell" id="shell">
+      <aside class="sidebar">
+        <div class="sidebar__top">
+          <div class="brand">
+            <div class="brand__mark">S</div>
+            <div class="brand__copy">
+              <span class="brand__title">Sugestatorium</span>
+              <div class="brand__meta">AxeCore suggestion observatory</div>
+            </div>
+          </div>
+          <button type="button" class="sidebar__toggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">menu</button>
+        </div>
+
+        <nav class="nav" aria-label="Primary">
+          <a href="{{ url_for('pages.home') }}" class="nav__link" {% if active_nav == 'home' %}aria-current="page"{% endif %}><span class="nav__label">CSV Uploads</span></a>
+          <a href="{{ url_for('pages.prompts') }}" class="nav__link" {% if active_nav == 'prompts' %}aria-current="page"{% endif %}><span class="nav__label">Prompt Library</span></a>
+          <a href="{{ url_for('pages.insights') }}" class="nav__link" {% if active_nav == 'insights' %}aria-current="page"{% endif %}><span class="nav__label">Insights</span></a>
+        </nav>
+
+        <div class="sidebar__footer">
+          <div class="caption">Single-workspace review tool with local files, Markdown prompts, and SQLite state.</div>
+        </div>
+      </aside>
+
+      <div class="content">
+        <header class="topbar">
+          <div class="topbar__main">
+            <button type="button" class="topbar__toggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">menu</button>
+            <div>
+              <div class="eyebrow">Accessibility Auditor</div>
+              <div class="topbar__title">{{ topbar_title or 'Sugestatorium' }}</div>
+              <div class="topbar__meta">{{ topbar_meta or 'Local-first accessibility suggestion review workspace' }}</div>
+            </div>
+          </div>
+
+          <div class="topbar__actions">
+            <div class="search-box" role="search">
+              <div class="search-box__field">
+                <span>search</span>
+                <input
+                  class="search-box__input"
+                  type="search"
+                  name="q"
+                  placeholder="Search runs, prompts, rules, statuses..."
+                  hx-get="{{ url_for('pages.search_results') }}"
+                  hx-trigger="keyup changed delay:200ms"
+                  hx-target="#search-results"
+                  autocomplete="off"
+                >
+              </div>
+              <div id="search-results"></div>
+            </div>
+          </div>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="page" style="padding-bottom: 0;">
+              <div class="stack">
+                {% for category, message in messages %}
+                  <div class="section">
+                    <div class="{{ 'danger-text' if category == 'error' else 'success-text' }}">{{ message }}</div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+      </div>
+    </div>
+
+    <div class="drawer-backdrop" id="drawer-shell" hidden onclick="closeDrawer()">
+      <aside class="drawer drawer--wide" onclick="event.stopPropagation()">
+        <div id="drawer-region"></div>
+      </aside>
+    </div>
+
+    <script>
+      function toggleSidebar() {
+        document.getElementById("shell").classList.toggle("shell--collapsed");
+      }
+
+      function closeDrawer() {
+        const shell = document.getElementById("drawer-shell");
+        const region = document.getElementById("drawer-region");
+        shell.hidden = true;
+        region.innerHTML = "";
+      }
+
+      document.body.addEventListener("htmx:afterSwap", function (event) {
+        if (event.detail.target.id === "drawer-region") {
+          document.getElementById("drawer-shell").hidden = false;
+        }
+      });
+    </script>
+  </body>
+  </html>

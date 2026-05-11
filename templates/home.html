@@ -1,0 +1,130 @@
+{% extends 'layout.html' %}
+
+{% set title = 'Sugestatorium' %}
+{% set topbar_title = 'Review Workspace' %}
+{% set topbar_meta = 'Local-first accessibility suggestion audit desk' %}
+
+{% block content %}
+<main class="page">
+  <section class="hero">
+    <div>
+      <div class="section-label">LLM Suggestion Evaluator</div>
+      <h1 class="hero__title">Judge generated accessibility fixes before they become prompt truth.</h1>
+      <div class="hero__copy">
+        Import recurring CSV exports, attach each batch to the exact prompt markdown version used, review the generated fixes row by row, and keep a persistent quality trail across iterations.
+      </div>
+    </div>
+
+    <div class="hero__actions">
+      <a href="#import-panel" class="button">Import Batch</a>
+      <a href="{{ url_for('pages.prompts') }}" class="button--secondary">Prompt Library</a>
+      <a href="{{ url_for('pages.insights') }}" class="button--ghost">Insights</a>
+    </div>
+  </section>
+
+  <div class="metrics-grid">
+    <section class="metric-card">
+      <div class="section-label">Prompt Files</div>
+      <div class="metric-card__value">{{ dashboard.prompts|length }}</div>
+      <div class="metric-card__subtext">Markdown prompt versions discoverable in `prompts/`.</div>
+    </section>
+    <section class="metric-card">
+      <div class="section-label">Imported Runs</div>
+      <div class="metric-card__value">{{ dashboard.runs|length }}</div>
+      <div class="metric-card__subtext">Persistent review batches stored in SQLite.</div>
+    </section>
+    <section class="metric-card">
+      <div class="section-label">Suggestions</div>
+      <div class="metric-card__value">{{ dashboard.total_suggestions }}</div>
+      <div class="metric-card__subtext">Rows parsed from CSV batches.</div>
+    </section>
+    <section class="metric-card">
+      <div class="section-label">Average Score</div>
+      <div class="metric-card__value">{{ dashboard.average_score|score_label }}</div>
+      <div class="metric-card__subtext">Overall reviewer quality signal across scored rows.</div>
+    </section>
+  </div>
+
+  <div class="stack" style="margin-top: 24px;">
+    <section class="section">
+      <div class="section__header">
+        <div>
+          <div class="section-label">Run History</div>
+          <h2 class="section-title">Imported CSV batches</h2>
+          <div class="section-copy">Each batch stays re-openable, so review can continue over days or weeks without re-importing it.</div>
+        </div>
+        <div class="badge">{{ dashboard.runs|length }} tracked runs</div>
+      </div>
+      <div style="margin-top: 18px;">
+        {% include 'partials/runs_table.html' %}
+      </div>
+    </section>
+
+    <section class="import-panel" id="import-panel">
+      <div class="section-label">Ingest Run</div>
+      <div class="section__header">
+        <div>
+          <h2 class="section-title">Import a fresh suggestion batch</h2>
+          <div class="section-copy">Attach each CSV to the exact prompt markdown version that produced it. That keeps later scoring and prompt comparison grounded.</div>
+        </div>
+        <div class="badge">{{ dashboard.workspace_csv_files|length }} local CSV file{% if dashboard.workspace_csv_files|length != 1 %}s{% endif %}</div>
+      </div>
+
+      <form action="{{ url_for('pages.imports') }}" method="post" enctype="multipart/form-data" class="import-form">
+        <label class="form-field">
+          <span class="field-label">Prompt Version</span>
+          <select class="select" name="prompt_id" required>
+            {% for prompt in dashboard.prompts %}
+              <option value="{{ prompt.id }}">{{ prompt.name }} | {{ prompt.model }} | temp {{ prompt.temperature }}</option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <label class="form-field">
+          <span class="field-label">Run Notes</span>
+          <input class="input" name="note" placeholder="Optional context for this upload batch">
+        </label>
+
+        <label class="form-field form-field--full">
+          <span class="field-label">Workspace CSV</span>
+          <select class="select" name="workspace_file">
+            <option value="">Select a CSV from the project root</option>
+            {% for file in dashboard.workspace_csv_files %}
+              <option value="{{ file.name }}">{{ file.name }} ({{ (file.size / 1024)|round(1) }} KB)</option>
+            {% endfor %}
+          </select>
+          <div class="form-note">You can select a local CSV already present in the project folder, or upload a new file below.</div>
+        </label>
+
+        <label class="form-field form-field--full">
+          <span class="field-label">Upload CSV</span>
+          <input class="input" type="file" name="upload" accept=".csv,text/csv">
+        </label>
+
+        <div class="form-field form-field--full">
+          <button type="submit" class="button">Import Batch</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="section">
+      <div class="section-label">Review Heuristics</div>
+      <h2 class="section-title">Suggested scoring lens</h2>
+      <div class="list" style="margin-top: 18px;">
+        <div class="list-item">
+          <div class="list-row"><span class="badge badge--accent">5</span><strong>Accurate and implementation-ready</strong></div>
+          <div class="caption">The suggestion is technically correct, scoped, and ready to feed back into the system.</div>
+        </div>
+        <div class="list-item">
+          <div class="list-row"><span class="badge">3</span><strong>Partially useful</strong></div>
+          <div class="caption">The suggestion points in the right direction, but tone or accuracy still needs adjustment.</div>
+        </div>
+        <div class="list-item">
+          <div class="list-row"><span class="badge badge--danger">1</span><strong>Unsafe or misleading</strong></div>
+          <div class="caption">The suggestion should become a prompt-fix example or a hard constraint in the next iteration.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+{% endblock %}

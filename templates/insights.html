@@ -1,0 +1,86 @@
+{% extends 'layout.html' %}
+
+{% set title = 'Insights' %}
+{% set topbar_title = 'Quality Signals' %}
+{% set topbar_meta = 'Score trends, repeat rule failures, and prompt-fix candidates' %}
+
+{% block content %}
+<main class="page">
+  <section class="hero">
+    <div>
+      <div class="section-label">Evaluation Signals</div>
+      <h1 class="hero__title">See whether prompt changes actually improve suggestion quality.</h1>
+      <div class="hero__copy">This view prioritizes prompt-level averages, repeat rule failures, and the downstream actions you assign to weak suggestions. It is meant to support prompt iteration, not vanity metrics.</div>
+    </div>
+  </section>
+
+  <div class="metrics-grid">
+    <section class="metric-card"><div class="section-label">Imported Runs</div><div class="metric-card__value">{{ insights.total_runs }}</div><div class="metric-card__subtext">Distinct CSV batches stored locally.</div></section>
+    <section class="metric-card"><div class="section-label">Suggestions</div><div class="metric-card__value">{{ insights.total_suggestions }}</div><div class="metric-card__subtext">Rows across all imported runs.</div></section>
+    <section class="metric-card"><div class="section-label">Reviewed</div><div class="metric-card__value">{{ insights.reviewed_suggestions }}</div><div class="metric-card__subtext">Rows with an explicit reviewer state.</div></section>
+    <section class="metric-card"><div class="section-label">Average Score</div><div class="metric-card__value">{{ insights.average_score|score_label }}</div><div class="metric-card__subtext">Overall signal for prompt quality, based on reviewed rows.</div></section>
+  </div>
+
+  <div class="insight-grid">
+    <section class="chart-card">
+      <div class="section-label">Prompt Comparison</div>
+      <h2 class="section-title">Prompt performance by average score</h2>
+      <div class="list" style="margin-top: 18px;">
+        {% for prompt in insights.prompt_breakdown %}
+          <div class="list-item">
+            <div class="list-row"><strong>{{ prompt.prompt_name }}</strong><span class="badge">{{ prompt.average_score|score_label }} / 5</span></div>
+            <div class="caption">{{ prompt.reviewed_suggestions }} reviewed suggestions across {{ prompt.runs }} batches</div>
+            <div class="progress"><span style="width: {{ ((prompt.average_score or 0) / 5 * 100)|round(0) }}%"></span></div>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="insight-panel">
+      <div class="section-label">Review Distribution</div>
+      <div class="list">
+        {% for entry in insights.review_distribution %}
+          <a href="{{ url_for('pages.insights_reviews', status=entry.status) }}" class="list-item">
+            <div class="list-row"><span class="status-pill status-pill--{{ entry.status }}">{{ entry.status|title_label }}</span><strong>{{ entry.count }}</strong></div>
+            <div class="progress"><span style="width: {{ (entry.count / insights.total_suggestions * 100)|round(0) if insights.total_suggestions else 0 }}%"></span></div>
+          </a>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+
+  <div class="insight-grid">
+    <section class="chart-card">
+      <div class="section-label">Repeated Rule Failures</div>
+      <h2 class="section-title">Most common rules across imported batches</h2>
+      <div class="list" style="margin-top: 18px;">
+        {% for rule in insights.top_rules %}
+          <a href="{{ url_for('pages.insights_reviews', rule=rule.rule_id) }}" class="list-item">
+            <div class="list-row"><strong>{{ rule.rule_id }}</strong><span class="badge">{{ rule.count }}</span></div>
+            <div class="progress"><span style="width: {{ (rule.count / insights.total_suggestions * 100)|round(0) if insights.total_suggestions else 0 }}%"></span></div>
+          </a>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="history-card">
+      <div class="section-label">Recent Imports</div>
+      <div class="list">
+        {% for run in insights.recent_runs %}
+          <a href="{{ url_for('pages.run_detail', run_id=run.id) }}" class="history-item">
+            <div class="list-row"><strong>{{ run.source_filename }}</strong><span class="badge">{{ run.imported_at|format_short_date }}</span></div>
+            <div class="caption">{{ run.reviewed_count }} reviewed rows</div>
+            <div class="progress"><span style="width: {{ ((run.average_score or 0) / 5 * 100)|round(0) }}%"></span></div>
+          </a>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+
+  {% set reviewed_only = true %}
+  {% set region = review_region %}
+  <div style="margin-top: 24px;" id="global-review-region">
+    {% include 'partials/global_review_region.html' %}
+  </div>
+</main>
+{% endblock %}

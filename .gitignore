@@ -1,0 +1,20 @@
+# Local runtime data
+storage/*
+!storage/.gitkeep
+!storage/imports/
+!storage/prompt_snapshots/
+storage/imports/*
+!storage/imports/.gitkeep
+storage/prompt_snapshots/*
+!storage/prompt_snapshots/.gitkeep
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.sqlite3
+
+# OS/editor noise
+.DS_Store
+*.log

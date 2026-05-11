@@ -1,0 +1,96 @@
+<div class="stack">
+  <div class="run-summary">
+    <div class="run-header">
+      <div>
+        <div class="section-label">Run Review</div>
+        <h1 class="run-title">{{ region.run.source_filename }}</h1>
+        <div class="section-copy">Prompt: <strong>{{ region.run.prompt_name }}</strong> ({{ region.run.prompt_id }})</div>
+        {% if region.run.note %}<div class="caption">{{ region.run.note }}</div>{% endif %}
+      </div>
+      <div class="mini-stat-grid mini-stat-grid--four">
+        <div class="mini-stat"><div class="mini-stat__label">Suggestions</div><div class="mini-stat__value">{{ region.run.row_count }}</div></div>
+        <div class="mini-stat"><div class="mini-stat__label">Reviewed</div><div class="mini-stat__value">{{ region.reviewed_count }}</div></div>
+        <div class="mini-stat"><div class="mini-stat__label">Rules</div><div class="mini-stat__value">{{ region.run.rules_count }}</div></div>
+        <div class="mini-stat"><div class="mini-stat__label">Filtered Rows</div><div class="mini-stat__value">{{ region.filtered_count }}</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-toolbar table-toolbar--padded">
+      <div>
+        <div class="section-label">Evaluation Table</div>
+        <div class="section-copy">Runs are persistent. Re-open any batch later and continue reviewing from the exact saved state.</div>
+      </div>
+      <div class="badge">{{ region.filtered_count }} matches</div>
+    </div>
+
+    <div class="table-scroll">
+      <table class="table table--run-review">
+        <thead>
+          <tr>
+            <th>Rule</th>
+            <th>Issue Context</th>
+            <th>Suggested Fix</th>
+            <th>Review</th>
+            <th>Score</th>
+            <th>Tags</th>
+            <th>Action</th>
+            <th>Resolved</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in region['items'] %}
+            <tr>
+              <td>
+                <button class="stack stack--compact" type="button" hx-get="{{ url_for('pages.suggestion_drawer', suggestion_id=item.id) }}" hx-target="#drawer-region">
+                  <span class="rule-chip">{{ item.rule_id }}</span>
+                  <span class="caption">{{ item.source_status }}</span>
+                </button>
+              </td>
+              <td><div class="excerpt excerpt--small">{{ item.current_implementation_description }}</div></td>
+              <td><div class="excerpt excerpt--small">{{ item.recommended_fix_description }}</div></td>
+              <td>
+                <form hx-post="{{ url_for('pages.review_update', suggestion_id=item.id) }}" hx-swap="none">
+                  <input type="hidden" name="field" value="review_status">
+                  <select class="table-select" name="value" onchange="this.form.requestSubmit()">
+                    {% for status in review_statuses %}<option value="{{ status }}" {% if item.review_status == status %}selected{% endif %}>{{ status|title_label }}</option>{% endfor %}
+                  </select>
+                </form>
+              </td>
+              <td>
+                <form hx-post="{{ url_for('pages.review_update', suggestion_id=item.id) }}" hx-swap="none">
+                  <input type="hidden" name="field" value="score">
+                  <select class="table-select" name="value" onchange="this.form.requestSubmit()">
+                    <option value="">Unscored</option>
+                    {% for score in [1,2,3,4,5] %}<option value="{{ score }}" {% if item.score == score %}selected{% endif %}>{{ score }}</option>{% endfor %}
+                  </select>
+                </form>
+              </td>
+              <td>
+                <form hx-post="{{ url_for('pages.review_update', suggestion_id=item.id) }}" hx-swap="none">
+                  <input type="hidden" name="field" value="tags">
+                  <input class="table-input" name="value" value="{{ item.tags|join(', ') }}" onchange="this.form.requestSubmit()">
+                </form>
+              </td>
+              <td>
+                <form hx-post="{{ url_for('pages.review_update', suggestion_id=item.id) }}" hx-swap="none">
+                  <input type="hidden" name="field" value="action">
+                  <select class="table-select" name="value" onchange="this.form.requestSubmit()">
+                    {% for action in review_actions %}<option value="{{ action }}" {% if item.action == action %}selected{% endif %}>{{ action|title_label }}</option>{% endfor %}
+                  </select>
+                </form>
+              </td>
+              <td>
+                <form hx-post="{{ url_for('pages.review_update', suggestion_id=item.id) }}" hx-swap="none">
+                  <input type="hidden" name="field" value="resolved">
+                  <input class="checkbox" type="checkbox" name="value" value="1" {% if item.resolved %}checked{% endif %} onchange="this.form.requestSubmit()">
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

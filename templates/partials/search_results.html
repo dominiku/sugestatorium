@@ -1,0 +1,17 @@
+{% if results %}
+  <div class="search-box__dropdown">
+    {% for result in results %}
+      <a href="{{ result.href }}" class="search-box__result">
+        <div>
+          <strong>{{ result.label }}</strong>
+          <div class="caption">{{ result.meta }}</div>
+        </div>
+        <span class="badge">{{ result.kind }}</span>
+      </a>
+    {% endfor %}
+  </div>
+{% elif request.args.get('q') %}
+  <div class="search-box__dropdown">
+    <div class="search-box__empty">No matching runs, prompts, or filters.</div>
+  </div>
+{% endif %}
