@@ -14,6 +14,15 @@ Sugestatorium is a local-first review tool for AI-generated accessibility sugges
 
 ## Local Run
 
+Quick start:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -r requirements.txt
+python3 app.py
+```
+
 Requirements:
 
 - Python 3.10+
@@ -66,7 +75,7 @@ rm -f storage/prompt_snapshots/*
 
 - Prompt files in `prompts/` are not part of that reset.
 
-## Installation
+## Minimal Install
 
 If you do not want to use `venv`, the minimal install is:
 
